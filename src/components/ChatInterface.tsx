@@ -1,88 +1,32 @@
 import React from "react";
 import "../index.css";
 import { fontFamily } from "../lib/fonts";
-import { colors } from "../lib/colors";
 
 /**
- * Shared dark-mode chat UI shell.
+ * Transparent centering wrapper on the cream canvas.
  *
- * This wraps scenes 1–3, providing a consistent chat window appearance.
- * The dark neutral-950 background (#292929) is the same color used in
- * Duckbill's design system for primary dark surfaces.
+ * The "Center-Out" layout uses `justifyContent: 'center'` so that when
+ * only the input bar exists (start of exchange), it appears in the vertical
+ * center. As messages accumulate, the content block grows and naturally
+ * shifts upward while staying centered.
  *
- * Children are rendered in the message area with vertical flex layout.
+ * Messages float directly on the cream canvas — no white card.
  */
 export const ChatInterface: React.FC<{
   children: React.ReactNode;
-  showHeader?: boolean;
-}> = ({ children, showHeader = true }) => {
+}> = ({ children }) => {
   return (
     <div
       style={{
-        width: 1080,
-        height: 1080,
-        backgroundColor: colors.neutral[950],
+        width: 750,
         display: "flex",
         flexDirection: "column",
+        justifyContent: "center",
+        padding: "36px 40px",
         fontFamily: `${fontFamily}, -apple-system, BlinkMacSystemFont, sans-serif`,
-        overflow: "hidden",
       }}
     >
-      {/* Top bar — minimal, just a subtle header line */}
-      {showHeader && (
-        <div
-          style={{
-            height: 80,
-            borderBottom: `1px solid ${colors.neutral[900]}`,
-            display: "flex",
-            alignItems: "center",
-            paddingLeft: 40,
-            paddingRight: 40,
-          }}
-        >
-          {/* Three window dots */}
-          <div style={{ display: "flex", gap: 8 }}>
-            <div
-              style={{
-                width: 12,
-                height: 12,
-                borderRadius: "50%",
-                backgroundColor: colors.neutral[700],
-              }}
-            />
-            <div
-              style={{
-                width: 12,
-                height: 12,
-                borderRadius: "50%",
-                backgroundColor: colors.neutral[700],
-              }}
-            />
-            <div
-              style={{
-                width: 12,
-                height: 12,
-                borderRadius: "50%",
-                backgroundColor: colors.neutral[700],
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Message area */}
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "flex-end",
-          padding: "40px 48px",
-          gap: 0,
-        }}
-      >
-        {children}
-      </div>
+      {children}
     </div>
   );
 };

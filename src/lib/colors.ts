@@ -36,14 +36,41 @@ export const colors = {
   cream: {
     50: "#f9f9f7",
     100: "#f4f4ef",
+    300: "#EBE9E3",
     400: "#e6e4de",
   },
   lime: {
     200: "#eefb86",
   },
   mint: {
-    400: "#a2dbc6",
+    100: "#E9F7F1",
+    200: "#D1EEE3",
+    300: "#BAE4D4",
+    400: "#A2DBC6",
+    500: "#72C4A4",
+    600: "#4FA882",
+    700: "#3B8565",
+    800: "#2A634A",
+    950: "#163824",
   },
+} as const;
+
+/**
+ * Light-mode palette for the "Finally Free" Parisian Love redesign.
+ * Floating white window on a soft cream canvas — cinematic and minimal.
+ */
+export const lightMode = {
+  canvas: "#FAF9F7",
+  window: "#FFFFFF",
+  windowShadow: "0 8px 32px rgba(0,0,0,0.08)",
+  userBubble: "#EBE9E3", // cream[300]
+  aiBubbleBg: "#FFFFFF",
+  aiBubbleBorder: "#E0E0E0",
+  duckbillBubbleBg: "#FFFFFF",
+  duckbillBubbleBorder: "#A2DBC6", // mint[400]
+  bodyText: "#292929",
+  handoffDot: "#A2DBC6", // mint[400]
+  handoffText: "#696969",
 } as const;
 
 /**

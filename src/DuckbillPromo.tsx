@@ -1,66 +1,63 @@
 import React from "react";
-import { Sequence, useVideoConfig } from "remotion";
-import { ChatScene } from "./scenes/ChatScene";
-import { HandoffScene } from "./scenes/HandoffScene";
-import { ResultScene } from "./scenes/ResultScene";
-import { CTAScene } from "./scenes/CTAScene";
-import { sceneFrames } from "./lib/timing";
+import { Audio, interpolate, staticFile, useCurrentFrame } from "remotion";
+import { TransitionSeries, linearTiming } from "@remotion/transitions";
+import { fade } from "@remotion/transitions/fade";
+import { StoryScene } from "./scenes/StoryScene";
+import { TaglineScene } from "./scenes/TaglineScene";
+import {
+  STORY_SCENE_DURATION,
+  TAGLINE_SCENE_DURATION,
+  FADE_TRANSITION_FRAMES,
+  FPS,
+  TOTAL_DURATION,
+} from "./lib/timing";
 
 /**
- * Main composition — orchestrates all 4 scenes sequentially.
+ * Main composition — orchestrates the full ~25-second promo.
  *
- * Each scene is wrapped in a <Sequence> with calculated `from` offsets.
- * Inside each Sequence, useCurrentFrame() returns LOCAL frame (starting at 0),
- * which is exactly what each scene component expects.
+ * Architecture:
+ *   TransitionSeries:
+ *     StoryScene    =  615 frames (20.5s) — pre-rendered chat → follow-up → zoom → call → result
+ *     fade()        =   15 frames (0.5s overlap)
+ *     TaglineScene  =  150 frames (5s)    — brand reveal + "An MCP for the real world."
+ *     Total         = 615 + 150 - 15 = 750 frames (25s) ✓
  *
- * premountFor is set to 1 second (30 frames) so the next scene's
- * fonts and assets preload before it becomes visible.
+ * Background audio plays as a sibling to TransitionSeries (not inside it)
+ * so it spans the full composition duration independently.
  */
 export const DuckbillPromo: React.FC = () => {
-  const { fps } = useVideoConfig();
+  const frame = useCurrentFrame();
 
-  const chatStart = 0;
-  const handoffStart = sceneFrames.chat;
-  const resultStart = handoffStart + sceneFrames.handoff;
-  const ctaStart = resultStart + sceneFrames.result;
+  // Audio volume envelope: fade in 1s, full in middle, fade out 2s
+  const audioVolume = interpolate(
+    frame,
+    [0, FPS * 1, TOTAL_DURATION - FPS * 2, TOTAL_DURATION],
+    [0, 0.4, 0.4, 0],
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+  );
 
   return (
     <>
-      <Sequence
-        from={chatStart}
-        durationInFrames={sceneFrames.chat}
-        name="Chat"
-        premountFor={1 * fps}
-      >
-        <ChatScene />
-      </Sequence>
+      <TransitionSeries>
+        <TransitionSeries.Sequence durationInFrames={STORY_SCENE_DURATION}>
+          <StoryScene />
+        </TransitionSeries.Sequence>
 
-      <Sequence
-        from={handoffStart}
-        durationInFrames={sceneFrames.handoff}
-        name="Handoff"
-        premountFor={1 * fps}
-      >
-        <HandoffScene />
-      </Sequence>
+        <TransitionSeries.Transition
+          presentation={fade()}
+          timing={linearTiming({ durationInFrames: FADE_TRANSITION_FRAMES })}
+        />
 
-      <Sequence
-        from={resultStart}
-        durationInFrames={sceneFrames.result}
-        name="Result"
-        premountFor={1 * fps}
-      >
-        <ResultScene />
-      </Sequence>
+        <TransitionSeries.Sequence durationInFrames={TAGLINE_SCENE_DURATION}>
+          <TaglineScene />
+        </TransitionSeries.Sequence>
+      </TransitionSeries>
 
-      <Sequence
-        from={ctaStart}
-        durationInFrames={sceneFrames.cta}
-        name="CTA"
-        premountFor={1 * fps}
-      >
-        <CTAScene />
-      </Sequence>
+      {/* Background audio — sibling to TransitionSeries so it spans full duration */}
+      <Audio
+        src={staticFile("audio/giorgiovitte-berry-groovy-bass-trap-476603.mp3")}
+        volume={audioVolume}
+      />
     </>
   );
 };

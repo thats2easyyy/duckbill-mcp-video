@@ -1,5 +1,10 @@
 /**
  * Shared timing constants for the Duckbill MCP promo video.
+ *
+ * StoryScene    = 615 frames (20.5s) — pre-rendered chat → follow-up → zoom → tool call → phone → human → result
+ * TaglineScene  = 150 frames (5s)    — brand reveal + "An MCP for the real world."
+ * Fade overlap  = 15 frames × 1 (story→tagline)
+ * Total         = 615 + 150 − 15 = 750 frames (25s)
  */
 
 export const FPS = 30;
@@ -20,26 +25,13 @@ export const springPresets = {
   bouncy: { damping: 8 },
 } as const;
 
-/**
- * Scene durations in seconds (and derived frame counts).
- */
-export const sceneDurations = {
-  chat: 8,
-  handoff: 8,
-  result: 8,
-  cta: 6,
-} as const;
+export const STORY_SCENE_DURATION = 615; // 20.5 seconds
 
-export const sceneFrames = {
-  chat: seconds(sceneDurations.chat),
-  handoff: seconds(sceneDurations.handoff),
-  result: seconds(sceneDurations.result),
-  cta: seconds(sceneDurations.cta),
-} as const;
+export const TAGLINE_SCENE_DURATION = 150; // 5 seconds
 
-export const TOTAL_DURATION = seconds(
-  sceneDurations.chat +
-    sceneDurations.handoff +
-    sceneDurations.result +
-    sceneDurations.cta
-);
+export const FADE_TRANSITION_FRAMES = 15;
+
+export const TOTAL_DURATION =
+  STORY_SCENE_DURATION +
+  TAGLINE_SCENE_DURATION -
+  FADE_TRANSITION_FRAMES; // 750 frames (25s)

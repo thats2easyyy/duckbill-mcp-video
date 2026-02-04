@@ -1,43 +1,57 @@
 import React from "react";
-import { useCurrentFrame, useVideoConfig, interpolate, spring } from "remotion";
-import { DuckbillLogo } from "../components/DuckbillLogo";
+import {
+  useCurrentFrame,
+  useVideoConfig,
+  interpolate,
+  spring,
+  Img,
+  staticFile,
+} from "remotion";
 import { springPresets, seconds } from "../lib/timing";
-import { gradients } from "../lib/colors";
+import { lightMode } from "../lib/colors";
 import { fontFamily, loadBrandFonts } from "../lib/fonts";
 
 loadBrandFonts();
 
 /**
- * Scene 4: CTA (~6s / 180 frames)
+ * TaglineScene — 5-second brand reveal (150 frames at 30fps).
  *
- * Brand reveal. The chat interface fades out and the Duckbill
- * primary gradient fills the screen. Then:
- * 1. Logo bounces in with a playful spring
- * 2. Tagline fades in: "Your AI agent's human hands."
- * 3. URL fades in: duckbill.ai
- * 4. Final frame holds for 2 seconds
+ * Same structure as previous CTA: symbol bounce → wordmark fade → tagline → URL.
+ * Compressed to 150 frames with reduced hold time.
  *
- * The gradient (mint → blue → lime) is Duckbill's brand signature.
+ * New tagline: "An MCP for the real world."
  */
-export const CTAScene: React.FC = () => {
+export const TaglineScene: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  // Logo entrance — bouncy spring for playful emphasis
-  const logoEntrance = spring({
-    frame: frame - seconds(0.5),
+  // Symbol entrance — bouncy spring for playful emphasis
+  const symbolEntrance = spring({
+    frame: frame - seconds(0.3),
     fps,
     config: springPresets.bouncy,
   });
 
-  const logoScale = interpolate(logoEntrance, [0, 1], [0.3, 1], {
+  const symbolScale = interpolate(symbolEntrance, [0, 1], [0.3, 1], {
+    extrapolateRight: "clamp",
+    extrapolateLeft: "clamp",
+  });
+
+  // Wordmark fade-in with slight upward slide
+  const wordmarkEntrance = spring({
+    frame: frame - seconds(0.8),
+    fps,
+    config: springPresets.smooth,
+  });
+
+  const wordmarkTranslateY = interpolate(wordmarkEntrance, [0, 1], [15, 0], {
     extrapolateRight: "clamp",
     extrapolateLeft: "clamp",
   });
 
   // Tagline fade-in with slight upward slide
   const taglineEntrance = spring({
-    frame: frame - seconds(1.8),
+    frame: frame - seconds(1.6),
     fps,
     config: springPresets.smooth,
   });
@@ -49,7 +63,7 @@ export const CTAScene: React.FC = () => {
 
   // URL fade-in
   const urlEntrance = spring({
-    frame: frame - seconds(2.8),
+    frame: frame - seconds(2.4),
     fps,
     config: springPresets.smooth,
   });
@@ -64,7 +78,7 @@ export const CTAScene: React.FC = () => {
       style={{
         width: 1080,
         height: 1080,
-        background: gradients.primary,
+        backgroundColor: lightMode.canvas,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -73,33 +87,32 @@ export const CTAScene: React.FC = () => {
         gap: 32,
       }}
     >
-      {/* Logo */}
+      {/* Official symbol */}
       <div
         style={{
-          opacity: logoEntrance,
-          transform: `scale(${logoScale})`,
+          opacity: symbolEntrance,
+          transform: `scale(${symbolScale})`,
         }}
       >
-        <DuckbillLogo size={160} />
+        <Img
+          src={staticFile("svgs/Duckbill_Symbol.svg")}
+          width={100}
+          height={127}
+        />
       </div>
 
-      {/* Wordmark */}
+      {/* Official wordmark */}
       <div
         style={{
-          opacity: logoEntrance,
-          transform: `scale(${logoScale})`,
+          opacity: wordmarkEntrance,
+          transform: `translateY(${wordmarkTranslateY}px)`,
         }}
       >
-        <span
-          style={{
-            fontSize: 72,
-            fontWeight: 700,
-            color: "#292929",
-            letterSpacing: -1,
-          }}
-        >
-          Duckbill
-        </span>
+        <Img
+          src={staticFile("svgs/Duckbill_Wordmark.svg")}
+          width={400}
+          height={74}
+        />
       </div>
 
       {/* Tagline */}
@@ -114,11 +127,11 @@ export const CTAScene: React.FC = () => {
           style={{
             fontSize: 36,
             fontWeight: 500,
-            color: "#292929",
+            color: lightMode.bodyText,
             opacity: 0.85,
           }}
         >
-          Your AI agent&apos;s human hands.
+          An MCP for the real world.
         </span>
       </div>
 
@@ -134,12 +147,12 @@ export const CTAScene: React.FC = () => {
           style={{
             fontSize: 30,
             fontWeight: 500,
-            color: "#292929",
+            color: lightMode.bodyText,
             opacity: 0.65,
             letterSpacing: 1,
           }}
         >
-          duckbill.ai
+          whattheduck.ai
         </span>
       </div>
     </div>
