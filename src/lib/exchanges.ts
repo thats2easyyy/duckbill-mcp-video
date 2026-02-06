@@ -1,17 +1,16 @@
 /**
  * Exchange data and phase-based timing for the Duckbill MCP promo.
  *
- * StoryScene phases (615 frames / 20.5s at 30fps):
- *   1. Pre-rendered chat (0–59)    — user prompt + AI response already visible
- *   2. Follow-up streams (60–~149) — "@Duckbill, call Presidio Hill School..." types in
- *   3. Camera zoom (120–179)       — scale 1→1.4, push research out of view
- *   4. Tool call chip (180–269)    — "Connecting to Duckbill..." with shimmer
- *   5. Phone call (270–389)        — "Calling Presidio Hill School ●●●" ring pulse
- *   6. Human + result (390–509)    — "Human assistant connected" pill, Duckbill result streams
- *   7. Hold (510–614)              — hold result, TransitionSeries fades to TaglineScene
+ * StoryScene phases (300 frames / 10s at 30fps):
+ *   1. Pre-rendered chat (0–39)    — user prompt + AI response already visible
+ *   2. Follow-up streams (40–~79)  — "@Duckbill, call Presidio Hill School..." types in
+ *   3. Camera zoom (40–130)        — scale 1→1.4, overlaps typing for dynamic feel
+ *   4. Tool call chip (80–125)     — "Connecting to Duckbill..." shimmer → "Connected"
+ *   5. Phone call (125–185)        — "Calling Presidio Hill School ●●●" ring pulse
+ *   6. Human + result (185–299)    — sub-label + Duckbill result streams, then fade
  */
 
-import { FPS } from "./timing";
+import { FPS, snapLocalToBeat, STORY_GLOBAL_OFFSET } from "./timing";
 
 // ── Types ──────────────────────────────────────────────
 
@@ -50,8 +49,8 @@ export interface StoryPhaseTiming {
 
 // ── Timing Parameters ──────────────────────────────────
 
-export const USER_CHARS_PER_SECOND = 35;
-export const STREAM_CHARS_PER_SECOND = 25;
+export const USER_CHARS_PER_SECOND = 60;
+export const STREAM_CHARS_PER_SECOND = 70;
 
 // ── Exchange Data: Presidio Hill School ────────────────
 
@@ -77,29 +76,32 @@ export const EXCHANGES: Exchange[] = [
  * Fixed anchor points define when each phase starts (matching the storyboard),
  * while streaming durations are computed from text length.
  */
-export function computeStoryPhaseTiming(exchange: Exchange): StoryPhaseTiming {
-  // Phase 2: follow-up streams starting at frame 60
-  const followUpStreamStart = 60;
+export function computeStoryPhaseTiming(
+  exchange: Exchange,
+  globalFrameOffset: number = STORY_GLOBAL_OFFSET
+): StoryPhaseTiming {
+  // Phase 2: follow-up streams — snap start to nearest beat
+  const followUpStreamStart = snapLocalToBeat(40, globalFrameOffset);
   const followUpStreamFrames = Math.ceil(
     (exchange.followUpText.length / USER_CHARS_PER_SECOND) * FPS
   );
   const followUpStreamEnd = followUpStreamStart + followUpStreamFrames;
 
-  // Phase 3: camera zoom (overlaps end of phase 2)
-  const zoomStart = 120;
-  const zoomEnd = 180;
+  // Phase 3: camera zoom (starts with follow-up text for dynamic overlap)
+  const zoomStart = followUpStreamStart;
+  const zoomEnd = 130;
 
-  // Phase 4: tool call chip
-  const toolCallStart = 180;
-  const toolCallConnectedStart = 260;
-  const toolCallEnd = 270;
+  // Phase 4: tool call chip — snap start to nearest beat
+  const toolCallStart = snapLocalToBeat(80, globalFrameOffset);
+  const toolCallConnectedStart = toolCallStart + 30;
+  const toolCallEnd = toolCallStart + 45;
 
-  // Phase 5: phone call
-  const callChipStart = 270;
+  // Phase 5: phone call — snap start to nearest beat
+  const callChipStart = snapLocalToBeat(125, globalFrameOffset);
 
-  // Phase 6: human connected + duckbill result
-  const humanConnectedStart = 390;
-  const duckbillStreamStart = 420;
+  // Phase 6: human connected + duckbill result — snap to nearest beats
+  const humanConnectedStart = snapLocalToBeat(185, globalFrameOffset);
+  const duckbillStreamStart = snapLocalToBeat(200, globalFrameOffset);
   const duckbillStreamFrames = Math.ceil(
     (exchange.duckbillResponse.length / STREAM_CHARS_PER_SECOND) * FPS
   );

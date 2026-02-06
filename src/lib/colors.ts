@@ -67,7 +67,7 @@ export const lightMode = {
   aiBubbleBg: "#FFFFFF",
   aiBubbleBorder: "#E0E0E0",
   duckbillBubbleBg: "#FFFFFF",
-  duckbillBubbleBorder: "#A2DBC6", // mint[400]
+  duckbillBubbleBorder: "#E0E0E0", // neutral, matches aiBubbleBorder
   bodyText: "#292929",
   handoffDot: "#A2DBC6", // mint[400]
   handoffText: "#696969",

@@ -1,22 +1,21 @@
 import React from "react";
-import { useCurrentFrame, useVideoConfig, spring, interpolate, interpolateColors } from "remotion";
+import { useCurrentFrame, useVideoConfig, spring, interpolate } from "remotion";
 import { springPresets } from "../lib/timing";
 import { colors } from "../lib/colors";
 import { fontFamily } from "../lib/fonts";
 
 /**
- * Animated 3-state chat chip that morphs through:
+ * Animated 2-state chat chip:
  *   1. "Connecting to Duckbill..." — cream, shimmer, link icon
- *   2. "Connected to Duckbill"     — mint, checkmark (at connectedStart)
- *   3. "Human assistant connected"  — mint, pulsing green dot (at humanConnectedStart)
+ *   2. "Connected to Duckbill"     — cream, checkmark (at connectedStart)
  *
  * Entrance is handled by ChipSlot's height spring — this chip only fades in via opacity.
+ * "Human assistant connected" is rendered separately in StoryScene as a sub-label.
  */
 export const ToolCallChip: React.FC<{
   startFrame: number;
   connectedStart: number;
-  humanConnectedStart: number;
-}> = ({ startFrame, connectedStart, humanConnectedStart }) => {
+}> = ({ startFrame, connectedStart }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
@@ -32,33 +31,22 @@ export const ToolCallChip: React.FC<{
 
   const opacity = entranceProgress;
 
-  // ── Transition 1: cream → mint + "Connecting..." → "Connected" (10 frames at connectedStart) ──
+  // ── Transition: "Connecting..." → "Connected" (10 frames at connectedStart) ──
   const connectedLocalFrame = frame - connectedStart;
-  const colorProgress = interpolate(connectedLocalFrame, [0, 10], [0, 1], {
+  const connectedProgress = interpolate(connectedLocalFrame, [0, 10], [0, 1], {
     extrapolateRight: "clamp",
     extrapolateLeft: "clamp",
   });
 
-  // ── Transition 2: "Connected to Duckbill" → "Human assistant connected" (10 frames at humanConnectedStart) ──
-  const humanLocalFrame = frame - humanConnectedStart;
-  const humanProgress = interpolate(humanLocalFrame, [0, 10], [0, 1], {
-    extrapolateRight: "clamp",
-    extrapolateLeft: "clamp",
-  });
-
-  // ── Interpolated colors: cream → mint ──
-  const bgColor = interpolateColors(colorProgress, [0, 1], [colors.cream[50], colors.mint[100]]);
-  const borderColor = interpolateColors(colorProgress, [0, 1], [colors.cream[300], colors.mint[400]]);
-  const iconStroke = interpolateColors(colorProgress, [0, 1], [colors.neutral[600], colors.mint[700]]);
+  // ── Colors stay cream throughout — no green ──
+  const bgColor = colors.cream[50];
+  const borderColor = colors.cream[300];
+  const iconStroke = colors.neutral[600];
 
   // ── Shimmer position (repeats every 30 frames), fades out with connection ──
   const shimmerCycle = localFrame % 30;
   const shimmerX = interpolate(shimmerCycle, [0, 30], [-100, 100]);
-  const shimmerOpacity = 1 - colorProgress;
-
-  // ── Pulsing green dot for "Human assistant connected" state ──
-  const dotLocalFrame = frame - humanConnectedStart;
-  const dotOpacity = 0.5 + 0.5 * Math.sin(Math.max(0, dotLocalFrame) * 0.2);
+  const shimmerOpacity = 1 - connectedProgress;
 
   return (
     <div
@@ -94,7 +82,7 @@ export const ToolCallChip: React.FC<{
           }}
         />
 
-        {/* Icon container — crossfades through 3 states */}
+        {/* Icon container — crossfades between link and checkmark */}
         <div style={{ position: "relative", width: 18, height: 18, flexShrink: 0 }}>
           {/* State 1: Link icon — fades out at connectedStart */}
           <svg
@@ -102,7 +90,7 @@ export const ToolCallChip: React.FC<{
             height={18}
             viewBox="0 0 24 24"
             fill="none"
-            style={{ position: "absolute", top: 0, left: 0, opacity: 1 - colorProgress }}
+            style={{ position: "absolute", top: 0, left: 0, opacity: 1 - connectedProgress }}
           >
             <path
               d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"
@@ -120,13 +108,13 @@ export const ToolCallChip: React.FC<{
             />
           </svg>
 
-          {/* State 2: Checkmark icon — fades in at connectedStart, fades out at humanConnectedStart */}
+          {/* State 2: Checkmark icon — fades in at connectedStart */}
           <svg
             width={18}
             height={18}
             viewBox="0 0 24 24"
             fill="none"
-            style={{ position: "absolute", top: 0, left: 0, opacity: colorProgress * (1 - humanProgress) }}
+            style={{ position: "absolute", top: 0, left: 0, opacity: connectedProgress }}
           >
             <path
               d="M20 6L9 17l-5-5"
@@ -136,80 +124,52 @@ export const ToolCallChip: React.FC<{
               strokeLinejoin="round"
             />
           </svg>
-
-          {/* State 3: Pulsing green dot — fades in at humanConnectedStart */}
-          <div
-            style={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
-              backgroundColor: colors.mint[600],
-              opacity: humanProgress * dotOpacity,
-            }}
-          />
         </div>
 
-        {/* Label — crossfade through 3 states */}
-        <div style={{ position: "relative", height: 22 }}>
+        {/* Label — crossfade between 2 states */}
+        <div style={{ position: "relative", height: 28, display: "flex", alignItems: "center" }}>
           {/* State 1: "Connecting to Duckbill..." — fades out at connectedStart */}
           <span
             style={{
               color: colors.neutral[800],
-              fontSize: 18,
+              fontSize: 22,
               fontWeight: 500,
               whiteSpace: "nowrap",
               position: "absolute",
-              top: 0,
+              top: "50%",
               left: 0,
-              opacity: 1 - colorProgress,
+              transform: "translateY(-50%)",
+              opacity: 1 - connectedProgress,
             }}
           >
             Connecting to Duckbill...
           </span>
-          {/* State 2: "Connected to Duckbill" — fades in at connectedStart, fades out at humanConnectedStart */}
+          {/* State 2: "Connected to Duckbill" — fades in at connectedStart */}
           <span
             style={{
               color: colors.neutral[800],
-              fontSize: 18,
+              fontSize: 22,
               fontWeight: 500,
               whiteSpace: "nowrap",
               position: "absolute",
-              top: 0,
+              top: "50%",
               left: 0,
-              opacity: colorProgress * (1 - humanProgress),
+              transform: "translateY(-50%)",
+              opacity: connectedProgress,
             }}
           >
             Connected to Duckbill
           </span>
-          {/* State 3: "Human assistant connected" — fades in at humanConnectedStart */}
+          {/* Invisible spacer to hold width */}
           <span
             style={{
-              color: colors.neutral[800],
-              fontSize: 18,
-              fontWeight: 500,
-              whiteSpace: "nowrap",
-              position: "absolute",
-              top: 0,
-              left: 0,
-              opacity: humanProgress,
-            }}
-          >
-            Human assistant connected
-          </span>
-          {/* Invisible spacer — uses longest text to hold width */}
-          <span
-            style={{
-              fontSize: 18,
+              fontSize: 22,
               fontWeight: 500,
               whiteSpace: "nowrap",
               visibility: "hidden",
             }}
           >
-            Human assistant connected
+            Connecting to Duckbill...
           </span>
         </div>
       </div>

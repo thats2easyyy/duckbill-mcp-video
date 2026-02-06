@@ -7,39 +7,91 @@ import {
   Img,
   staticFile,
 } from "remotion";
-import { springPresets, seconds } from "../lib/timing";
+import { useAudioData, visualizeAudio } from "@remotion/media-utils";
+import { springPresets, snapLocalToBeat, TAGLINE_GLOBAL_OFFSET } from "../lib/timing";
 import { lightMode } from "../lib/colors";
 import { fontFamily, loadBrandFonts } from "../lib/fonts";
+import { DuckbillLogo } from "../components/DuckbillLogo";
 
 loadBrandFonts();
+
+const AUDIO_SRC = staticFile("audio/Skyline Stutter.mp3");
 
 /**
  * TaglineScene — 5-second brand reveal (150 frames at 30fps).
  *
- * Same structure as previous CTA: symbol bounce → wordmark fade → tagline → URL.
- * Compressed to 150 frames with reduced hold time.
+ * Flowing line background → symbol bounce → wordmark fade →
+ * tagline → URL.
  *
- * New tagline: "An MCP for the real world."
+ * Element entrances are snapped to the global beat grid (130 BPM)
+ * and the symbol / flowing line react to bass amplitude.
  */
-export const TaglineScene: React.FC = () => {
+
+interface TaglineSceneProps {
+  globalFrameOffset?: number;
+}
+
+export const TaglineScene: React.FC<TaglineSceneProps> = ({
+  globalFrameOffset = TAGLINE_GLOBAL_OFFSET,
+}) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  // Symbol entrance — bouncy spring for playful emphasis
-  const symbolEntrance = spring({
-    frame: frame - seconds(0.3),
+  const globalFrame = frame + globalFrameOffset;
+
+  // ── Beat-snapped entrance delays ──
+  const wordmarkDelay = snapLocalToBeat(24, globalFrameOffset);
+  const taglineDelay = snapLocalToBeat(48, globalFrameOffset);
+  const urlDelay = snapLocalToBeat(72, globalFrameOffset);
+
+  // ── Audio reactivity ──
+  const audioData = useAudioData(AUDIO_SRC);
+
+  let amplitude = 0;
+  if (audioData) {
+    const visualization = visualizeAudio({
+      audioData,
+      frame: globalFrame,
+      fps,
+      numberOfSamples: 32,
+    });
+    const bassBins = visualization.slice(1, 6);
+    amplitude = bassBins.reduce((s, v) => s + v, 0) / bassBins.length;
+  }
+
+  // ── Logo position & size animation ──
+  // Uses the SAME DuckbillLogo component as LLMCompatibilityScene so the
+  // fade crossfade is invisible (identical asset at identical position).
+  // Then the logo smoothly moves up and scales to its final size.
+  const LOGO_START_Y = 580; // LLMCompatibilityScene CENTER_Y
+  const LOGO_END_Y = 401; // centered position in TaglineScene layout
+  const LOGO_START_SIZE = 80; // matches LLMCompatibilityScene logo size
+  const LOGO_END_SIZE = 120; // final brand-mark size
+
+  const logoPositionProgress = spring({
+    frame,
     fps,
-    config: springPresets.bouncy,
+    config: springPresets.smooth,
   });
 
-  const symbolScale = interpolate(symbolEntrance, [0, 1], [0.3, 1], {
-    extrapolateRight: "clamp",
-    extrapolateLeft: "clamp",
-  });
+  const logoY = interpolate(
+    logoPositionProgress,
+    [0, 1],
+    [LOGO_START_Y, LOGO_END_Y]
+  );
+
+  const logoSize = interpolate(
+    logoPositionProgress,
+    [0, 1],
+    [LOGO_START_SIZE, LOGO_END_SIZE]
+  );
+
+  // Audio-reactive logo breathing
+  const logoScale = 1.0 + amplitude * 0.02;
 
   // Wordmark fade-in with slight upward slide
   const wordmarkEntrance = spring({
-    frame: frame - seconds(0.8),
+    frame: frame - wordmarkDelay,
     fps,
     config: springPresets.smooth,
   });
@@ -51,7 +103,7 @@ export const TaglineScene: React.FC = () => {
 
   // Tagline fade-in with slight upward slide
   const taglineEntrance = spring({
-    frame: frame - seconds(1.6),
+    frame: frame - taglineDelay,
     fps,
     config: springPresets.smooth,
   });
@@ -63,7 +115,7 @@ export const TaglineScene: React.FC = () => {
 
   // URL fade-in
   const urlEntrance = spring({
-    frame: frame - seconds(2.4),
+    frame: frame - urlDelay,
     fps,
     config: springPresets.smooth,
   });
@@ -85,20 +137,26 @@ export const TaglineScene: React.FC = () => {
         justifyContent: "center",
         fontFamily: `${fontFamily}, -apple-system, BlinkMacSystemFont, sans-serif`,
         gap: 32,
+        position: "relative",
+        overflow: "hidden",
       }}
     >
-      {/* Official symbol */}
+      {/* Spacer — reserves layout space for the absolutely-positioned logo */}
+      <div style={{ width: 120, height: 120, flexShrink: 0 }} />
+
+      {/* DuckbillLogo — same component as LLMCompatibilityScene.
+          Starts at (540, 580) matching the LLM scene exactly so the
+          fade crossfade is invisible, then animates to final position. */}
       <div
         style={{
-          opacity: symbolEntrance,
-          transform: `scale(${symbolScale})`,
+          position: "absolute",
+          left: 540,
+          top: logoY,
+          transform: `translate(-50%, -50%) scale(${logoScale})`,
+          zIndex: 2,
         }}
       >
-        <Img
-          src={staticFile("svgs/Duckbill_Symbol.svg")}
-          width={100}
-          height={127}
-        />
+        <DuckbillLogo size={Math.round(logoSize)} />
       </div>
 
       {/* Official wordmark */}
@@ -106,6 +164,7 @@ export const TaglineScene: React.FC = () => {
         style={{
           opacity: wordmarkEntrance,
           transform: `translateY(${wordmarkTranslateY}px)`,
+          zIndex: 1,
         }}
       >
         <Img
@@ -121,17 +180,18 @@ export const TaglineScene: React.FC = () => {
           opacity: taglineEntrance,
           transform: `translateY(${taglineTranslateY}px)`,
           marginTop: 8,
+          zIndex: 1,
         }}
       >
         <span
           style={{
-            fontSize: 36,
+            fontSize: 40,
             fontWeight: 500,
             color: lightMode.bodyText,
             opacity: 0.85,
           }}
         >
-          An MCP for the real world.
+          You don't have to do it all yourself.
         </span>
       </div>
 
@@ -141,6 +201,7 @@ export const TaglineScene: React.FC = () => {
           opacity: urlEntrance,
           transform: `translateY(${urlTranslateY}px)`,
           marginTop: 16,
+          zIndex: 1,
         }}
       >
         <span

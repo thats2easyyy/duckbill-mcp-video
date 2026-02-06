@@ -20,19 +20,7 @@ export const DuckbillLogo: React.FC<{ size?: number }> = ({ size = 120 }) => {
         width="42"
         height="42"
         rx="12"
-        fill="url(#paint0_linear_logo)"
-      />
-      <rect
-        width="42"
-        height="42"
-        rx="12"
-        fill="url(#paint1_radial_logo)"
-      />
-      <rect
-        width="42"
-        height="42"
-        rx="12"
-        fill="url(#paint2_radial_logo)"
+        fill="#EEFB86"
       />
       <g clipPath="url(#clip0_logo)">
         <path
@@ -45,39 +33,6 @@ export const DuckbillLogo: React.FC<{ size?: number }> = ({ size = 120 }) => {
         />
       </g>
       <defs>
-        <linearGradient
-          id="paint0_linear_logo"
-          x1="4.75"
-          y1="0"
-          x2="34.75"
-          y2="44.5"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop offset="0.176537" stopColor="#E5EDF7" />
-          <stop offset="0.865385" stopColor="#EEFB86" />
-        </linearGradient>
-        <radialGradient
-          id="paint1_radial_logo"
-          cx="0"
-          cy="0"
-          r="1"
-          gradientUnits="userSpaceOnUse"
-          gradientTransform="translate(8.5 16.5) rotate(11.9442) scale(53.1507 41.071)"
-        >
-          <stop offset="0.499016" stopColor="#FBB7FC" stopOpacity="0" />
-          <stop offset="0.758336" stopColor="#FBB7FC" />
-        </radialGradient>
-        <radialGradient
-          id="paint2_radial_logo"
-          cx="0"
-          cy="0"
-          r="1"
-          gradientUnits="userSpaceOnUse"
-          gradientTransform="translate(-3.5) rotate(46.8648) scale(66.5475 43.039)"
-        >
-          <stop stopColor="#A2DBC6" />
-          <stop offset="0.54387" stopColor="#A2DBC6" stopOpacity="0" />
-        </radialGradient>
         <clipPath id="clip0_logo">
           <rect
             width="16"

@@ -11,16 +11,14 @@ import { fontFamily } from "../lib/fonts";
  *
  * Animation lifecycle:
  *   0–12:  Pill springs in (translateY + opacity), phone icon 3 frames later
- *   12+:   Dots pulse in staggered wave, ring pulse radiates from phone icon
+ *   12+:   Dots pulse in staggered wave
  *   connectedStart: Background transitions from cream → mint over 10 frames
  *   completionStart: Pill expands into rounded rect with confirmation text,
- *          dots fade out, ring pulse stops, background transitions to white
+ *          dots fade out, background transitions to white
  *
  * Hero mode (hero={true}):
  *   - Larger phone icon (24px), label font (22px), padding (14px 28px)
- *   - Ring pulse max scale 3.0, opacity 0.5
- *   - Box-shadow glow pulsing in sync with ring cycle
- *   - Scale "breathe" effect: 1.0 → 1.05 → 1.0 over ~20 frames after entrance
+ *   - Box-shadow glow pulsing
  *   - Completion height: 100px, text 18px
  */
 export const CallStatusChip: React.FC<{
@@ -42,8 +40,6 @@ export const CallStatusChip: React.FC<{
   const chipPadding = hero ? "14px 28px" : "0px 20px";
   const completionHeight = hero ? 100 : 90;
   const completionFontSize = hero ? 18 : 16;
-  const ringMaxScale = hero ? 3.0 : 2.5;
-  const ringMaxOpacity = hero ? 0.5 : 0.4;
 
   // ── Entrance (spring in over ~12 frames) ──
   const entranceProgress = spring({
@@ -68,11 +64,6 @@ export const CallStatusChip: React.FC<{
 
   const opacity = entranceProgress;
 
-  // ── Hero breathe effect (scale 1.0 → 1.05 → 1.0 over ~20 frames after entrance) ──
-  const breatheScale = hero && localFrame >= 12 && localFrame < 32
-    ? 1 + 0.05 * Math.sin(((localFrame - 12) / 20) * Math.PI)
-    : 1;
-
   // ── Color transition: cream → mint (over 10 frames at connectedStart) ──
   const connectedLocalFrame = connectedStart !== undefined ? frame - connectedStart : -1;
   const colorProgress = connectedStart !== undefined
@@ -82,11 +73,11 @@ export const CallStatusChip: React.FC<{
       })
     : 1; // No connectedStart → start at mint (backwards compat)
 
-  const chipBg = interpolateColors(colorProgress, [0, 1], [colors.cream[50], colors.mint[100]]);
-  const chipBorder = interpolateColors(colorProgress, [0, 1], [colors.cream[300], colors.mint[400]]);
-  const iconColor = interpolateColors(colorProgress, [0, 1], [colors.neutral[600], colors.mint[700]]);
-  const dotColor = interpolateColors(colorProgress, [0, 1], [colors.neutral[600], colors.mint[600]]);
-  const ringColor = interpolateColors(colorProgress, [0, 1], [colors.neutral[400], colors.mint[500]]);
+  // Colors stay cream throughout — no green transition
+  const chipBg = colors.cream[50];
+  const chipBorder = colors.cream[300];
+  const iconColor = colors.neutral[600];
+  const dotColor = colors.neutral[600];
 
   // ── Completion transition ──
   const isCompleting = completionStart !== undefined && frame >= completionStart;
@@ -116,17 +107,8 @@ export const CallStatusChip: React.FC<{
     ? interpolate(completionProgress, [0, 1], [1, 0.6])
     : 1;
 
-  // ── Ring pulse (repeats every ~30 frames from phone icon) ──
+  // ── Hero glow (box-shadow pulsing) ──
   const ringCycle = localFrame % 30;
-  const ringScale = interpolate(ringCycle, [0, 20], [1, ringMaxScale], {
-    extrapolateRight: "clamp",
-  });
-  const ringOpacity =
-    localFrame >= 6 && localFrame < 100 && !isCompleting
-      ? interpolate(ringCycle, [0, 20], [ringMaxOpacity, 0], { extrapolateRight: "clamp" })
-      : 0;
-
-  // ── Hero glow (box-shadow pulsing in sync with ring cycle) ──
   const glowRadius = hero && localFrame >= 6 && localFrame < 100 && !isCompleting
     ? interpolate(ringCycle, [0, 20], [4, 20], { extrapolateRight: "clamp" })
     : 0;
@@ -144,7 +126,7 @@ export const CallStatusChip: React.FC<{
   // otherwise blend between cream and mint with the pulse
   const finalBorderColor = localFrame >= 12 && localFrame < 100 && !isCompleting
     ? interpolateColors(borderPulse, [0.8, 1], [
-        interpolateColors(colorProgress, [0, 1], [colors.cream[300], `rgba(162, 219, 198, 0.8)`]),
+        `rgba(235, 233, 227, 0.8)`,
         chipBorder,
       ])
     : chipBorder;
@@ -155,7 +137,6 @@ export const CallStatusChip: React.FC<{
         display: "flex",
         justifyContent: "flex-start",
         opacity,
-        transform: breatheScale !== 1 ? `scale(${breatheScale})` : undefined,
       }}
     >
       <div
@@ -173,11 +154,11 @@ export const CallStatusChip: React.FC<{
             : chipBg,
           border: `${interpolate(completionProgress, [0, 1], [1.5, 2])}px solid ${
             isCompleting
-              ? interpolateColors(completionProgress, [0, 1], [chipBorder, colors.mint[400]])
+              ? interpolateColors(completionProgress, [0, 1], [chipBorder, colors.cream[300]])
               : finalBorderColor
           }`,
           boxShadow: glowRadius > 0
-            ? `0 0 ${glowRadius}px rgba(186, 228, 212, ${glowOpacity})`
+            ? `0 0 ${glowRadius}px rgba(209, 209, 209, ${glowOpacity})`
             : 'none',
           justifyContent: "center",
           fontFamily: `${fontFamily}, -apple-system, BlinkMacSystemFont, sans-serif`,
@@ -185,22 +166,8 @@ export const CallStatusChip: React.FC<{
       >
         {/* Top row: phone icon + label + dots */}
         <div style={{ display: "flex", alignItems: "center", gap: hero ? 12 : 10 }}>
-          {/* Phone icon → Checkmark crossfade with ring pulse */}
+          {/* Phone icon → Checkmark crossfade */}
           <div style={{ position: "relative", width: iconSize, height: iconSize, flexShrink: 0 }}>
-            {/* Ring pulse circle */}
-            <div
-              style={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                width: iconSize,
-                height: iconSize,
-                borderRadius: "50%",
-                border: `2px solid ${ringColor}`,
-                opacity: ringOpacity,
-                transform: `translate(-50%, -50%) scale(${ringScale})`,
-              }}
-            />
             {/* Phone icon SVG — fades out at connectedStart */}
             <svg
               width={iconSize}
@@ -256,7 +223,18 @@ export const CallStatusChip: React.FC<{
           </span>
 
           {/* Pulsing dots — fade out during completion AND when connected */}
-          <div style={{ opacity: dotsOpacity * (1 - colorProgress) }}>
+          <div style={{
+            opacity: dotsOpacity * (1 - colorProgress),
+            width: interpolate(colorProgress, [0, 1], [hero ? 33 : 25, 0], {
+              extrapolateRight: "clamp",
+              extrapolateLeft: "clamp",
+            }),
+            marginLeft: interpolate(colorProgress, [0, 1], [0, hero ? -12 : -10], {
+              extrapolateRight: "clamp",
+              extrapolateLeft: "clamp",
+            }),
+            overflow: "hidden",
+          }}>
             <PulsingDots localFrame={localFrame} hero={hero} dotColor={dotColor} />
           </div>
         </div>
