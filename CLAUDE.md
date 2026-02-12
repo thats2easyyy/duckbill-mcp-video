@@ -8,7 +8,7 @@ Always use `/remotion-best-practices` when working with Remotion code in this pr
 
 ## Project Overview
 
-Remotion-based promotional video for Duckbill MCP. Renders a ~29-second, 1080×1080 square video at 30 FPS. The composition is a TransitionSeries of 5 scenes with 15-frame fade transitions between them.
+Remotion-based promotional video for Duckbill MCP. Renders a ~23.3-second, 1080×1080 square video at 30 FPS. The composition is a TransitionSeries of 4 scenes with 15-frame fade transitions between them.
 
 ## Commands
 
@@ -27,7 +27,7 @@ npm run render
 `DuckbillPromo.tsx` orchestrates the full video as a `TransitionSeries`:
 
 ```
-IntroScene (156f) → StoryScene (300f) → CapabilitiesScene (180f) → LLMCompatibilityScene (150f) → TaglineScene (150f)
+IntroScene (185f) → StoryScene (250f) → NowYouCanScene (160f) → TaglineScene (150f)
 ```
 
 Each scene is also registered individually in `Root.tsx` for isolated preview in the studio.
@@ -48,7 +48,7 @@ Each scene is also registered individually in `Root.tsx` for isolated preview in
 
 ### Story Data (`src/lib/exchanges.ts`)
 
-Contains the chat narrative content and computes phase timing (when text streams, tool calls appear, camera zooms, etc.). Phase offsets are derived from character counts and stream speeds.
+Contains the chat narrative content and computes phase timing (when text streams, tool calls appear, etc.). Phase offsets are derived from character counts and stream speeds.
 
 ### Brand System (`src/lib/colors.ts`)
 

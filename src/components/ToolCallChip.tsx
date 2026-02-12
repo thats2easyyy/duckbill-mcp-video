@@ -1,16 +1,14 @@
 import React from "react";
 import { useCurrentFrame, useVideoConfig, spring, interpolate } from "remotion";
-import { springPresets } from "../lib/timing";
 import { colors } from "../lib/colors";
 import { fontFamily } from "../lib/fonts";
 
 /**
- * Animated 2-state chat chip:
- *   1. "Connecting to Duckbill..." — cream, shimmer, link icon
- *   2. "Connected to Duckbill"     — cream, checkmark (at connectedStart)
+ * Animated 2-state tool call chip:
+ *   1. "Connecting to Duckbill..." — cream, shimmer + text shimmer, wrench icon
+ *   2. "Connected to Duckbill"     — cream, wrench icon (at connectedStart)
  *
  * Entrance is handled by ChipSlot's height spring — this chip only fades in via opacity.
- * "Human assistant connected" is rendered separately in StoryScene as a sub-label.
  */
 export const ToolCallChip: React.FC<{
   startFrame: number;
@@ -26,16 +24,17 @@ export const ToolCallChip: React.FC<{
   const entranceProgress = spring({
     frame: localFrame,
     fps,
-    config: springPresets.snappy,
+    config: { damping: 20, stiffness: 200 },
   });
 
   const opacity = entranceProgress;
 
-  // ── Transition: "Connecting..." → "Connected" (10 frames at connectedStart) ──
+  // ── Transition: "Connecting..." → "Connected" (spring crossfade at connectedStart) ──
   const connectedLocalFrame = frame - connectedStart;
-  const connectedProgress = interpolate(connectedLocalFrame, [0, 10], [0, 1], {
-    extrapolateRight: "clamp",
-    extrapolateLeft: "clamp",
+  const connectedProgress = spring({
+    frame: Math.max(0, connectedLocalFrame),
+    fps,
+    config: { damping: 200 },
   });
 
   // ── Colors stay cream throughout — no green ──
@@ -43,10 +42,11 @@ export const ToolCallChip: React.FC<{
   const borderColor = colors.cream[300];
   const iconStroke = colors.neutral[600];
 
-  // ── Shimmer position (repeats every 30 frames), fades out with connection ──
+  // ── Background shimmer (repeats every 30 frames), fades out with connection ──
   const shimmerCycle = localFrame % 30;
   const shimmerX = interpolate(shimmerCycle, [0, 30], [-100, 100]);
   const shimmerOpacity = 1 - connectedProgress;
+
 
   return (
     <div
@@ -60,9 +60,9 @@ export const ToolCallChip: React.FC<{
         style={{
           display: "flex",
           alignItems: "center",
-          gap: 10,
-          padding: "12px 24px",
-          borderRadius: 22,
+          gap: 12,
+          padding: "14px 28px",
+          borderRadius: 26,
           backgroundColor: bgColor,
           border: `1.5px solid ${borderColor}`,
           position: "relative",
@@ -82,96 +82,34 @@ export const ToolCallChip: React.FC<{
           }}
         />
 
-        {/* Icon container — crossfades between link and checkmark */}
-        <div style={{ position: "relative", width: 18, height: 18, flexShrink: 0 }}>
-          {/* State 1: Link icon — fades out at connectedStart */}
-          <svg
-            width={18}
-            height={18}
-            viewBox="0 0 24 24"
-            fill="none"
-            style={{ position: "absolute", top: 0, left: 0, opacity: 1 - connectedProgress }}
-          >
-            <path
-              d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"
-              stroke={iconStroke}
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
-              stroke={iconStroke}
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+        {/* Tool/wrench icon — stays visible throughout */}
+        <svg
+          width={22}
+          height={22}
+          viewBox="0 0 24 24"
+          fill="none"
+          style={{ flexShrink: 0 }}
+        >
+          <path
+            d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"
+            stroke={iconStroke}
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
 
-          {/* State 2: Checkmark icon — fades in at connectedStart */}
-          <svg
-            width={18}
-            height={18}
-            viewBox="0 0 24 24"
-            fill="none"
-            style={{ position: "absolute", top: 0, left: 0, opacity: connectedProgress }}
-          >
-            <path
-              d="M20 6L9 17l-5-5"
-              stroke={iconStroke}
-              strokeWidth={2.5}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </div>
-
-        {/* Label — crossfade between 2 states */}
-        <div style={{ position: "relative", height: 28, display: "flex", alignItems: "center" }}>
-          {/* State 1: "Connecting to Duckbill..." — fades out at connectedStart */}
-          <span
-            style={{
-              color: colors.neutral[800],
-              fontSize: 22,
-              fontWeight: 500,
-              whiteSpace: "nowrap",
-              position: "absolute",
-              top: "50%",
-              left: 0,
-              transform: "translateY(-50%)",
-              opacity: 1 - connectedProgress,
-            }}
-          >
-            Connecting to Duckbill...
-          </span>
-          {/* State 2: "Connected to Duckbill" — fades in at connectedStart */}
-          <span
-            style={{
-              color: colors.neutral[800],
-              fontSize: 22,
-              fontWeight: 500,
-              whiteSpace: "nowrap",
-              position: "absolute",
-              top: "50%",
-              left: 0,
-              transform: "translateY(-50%)",
-              opacity: connectedProgress,
-            }}
-          >
-            Connected to Duckbill
-          </span>
-          {/* Invisible spacer to hold width */}
-          <span
-            style={{
-              fontSize: 22,
-              fontWeight: 500,
-              whiteSpace: "nowrap",
-              visibility: "hidden",
-            }}
-          >
-            Connecting to Duckbill...
-          </span>
-        </div>
+        {/* Label — hard swap to avoid crossfade blur on near-identical text */}
+        <span
+          style={{
+            color: colors.neutral[800],
+            fontSize: 26,
+            fontWeight: 500,
+            whiteSpace: "nowrap",
+          }}
+        >
+          {connectedProgress > 0.5 ? "Connected to Duckbill" : "Connecting to Duckbill..."}
+        </span>
       </div>
     </div>
   );

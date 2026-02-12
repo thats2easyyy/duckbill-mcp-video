@@ -1,13 +1,11 @@
 /**
  * Exchange data and phase-based timing for the Duckbill MCP promo.
  *
- * StoryScene phases (300 frames / 10s at 30fps):
- *   1. Pre-rendered chat (0–39)    — user prompt + AI response already visible
- *   2. Follow-up streams (40–~79)  — "@Duckbill, call Presidio Hill School..." types in
- *   3. Camera zoom (40–130)        — scale 1→1.4, overlaps typing for dynamic feel
- *   4. Tool call chip (80–125)     — "Connecting to Duckbill..." shimmer → "Connected"
- *   5. Phone call (125–185)        — "Calling Presidio Hill School ●●●" ring pulse
- *   6. Human + result (185–299)    — sub-label + Duckbill result streams, then fade
+ * StoryScene phases (250 frames / 8.3s at 30fps):
+ *   1. User message streams (~15–~63)   — "ask duckbill to call presidio hill..." types in
+ *   2. Tool call chip (~72–~112)        — "Connecting to Duckbill..." shimmer → "Connected"
+ *   3. Phone call (~113–~155)           — "Calling Presidio Hill School ●●●" (waits for tool call settle)
+ *   4. Human + result (~155–225)        — sub-label + Duckbill result streams, then fade
  */
 
 import { FPS, snapLocalToBeat, STORY_GLOBAL_OFFSET } from "./timing";
@@ -15,33 +13,25 @@ import { FPS, snapLocalToBeat, STORY_GLOBAL_OFFSET } from "./timing";
 // ── Types ──────────────────────────────────────────────
 
 export interface Exchange {
-  promptText: string;
-  aiResponse: string;
   followUpText: string;
   callTarget: string;
   duckbillResponse: string;
 }
 
 export interface StoryPhaseTiming {
-  // Phase 1: pre-rendered (no animation frames needed, just data)
-
-  // Phase 2: follow-up streams in
+  // Phase 1: user message streams in
   followUpStreamStart: number;
   followUpStreamEnd: number;
 
-  // Phase 3: camera zoom
-  zoomStart: number;
-  zoomEnd: number;
-
-  // Phase 4: tool call chip
+  // Phase 2: tool call chip
   toolCallStart: number;
   toolCallConnectedStart: number;
   toolCallEnd: number;
 
-  // Phase 5: phone call
+  // Phase 3: phone call
   callChipStart: number;
 
-  // Phase 6: human connected + duckbill result
+  // Phase 4: human connected + duckbill result
   humanConnectedStart: number;
   duckbillStreamStart: number;
   duckbillStreamEnd: number;
@@ -49,22 +39,18 @@ export interface StoryPhaseTiming {
 
 // ── Timing Parameters ──────────────────────────────────
 
-export const USER_CHARS_PER_SECOND = 60;
-export const STREAM_CHARS_PER_SECOND = 70;
+export const USER_CHARS_PER_SECOND = 35;
+export const STREAM_CHARS_PER_SECOND = 110;
 
 // ── Exchange Data: Presidio Hill School ────────────────
 
 export const EXCHANGES: Exchange[] = [
   {
-    promptText:
-      "I'm looking at kindergarten options in SF — what are the best schools near Pacific Heights?",
-    aiResponse:
-      "Great question! Pacific Heights has several excellent options for kindergarten. Here are a few worth looking into:\n\n• Presidio Hill School — A Pre-K–8 independent school known for its outdoor-focused curriculum and small class sizes. It's right on the edge of the Presidio, which is a huge perk.\n\n• Town School for Boys — A well-regarded K–8 school in Pacific Heights with strong academics and a tight-knit community.\n\n• San Francisco Day School — K–8, progressive philosophy with an emphasis on project-based learning and diversity.\n\nPresidio Hill is probably the most competitive for fall enrollment — I'd recommend reaching out soon since info sessions fill up fast.",
     followUpText:
-      "Hey @Duckbill, call Presidio Hill School and ask about K enrollment for fall",
-    callTarget: "Calling Presidio Hill School",
+      "ask duckbill to call presidio hill for fall enrollment",
+    callTarget: "Presidio Hill School",
     duckbillResponse:
-      "Done! Info session Oct 12, application deadline Jan 15. ✓",
+      "Good news! Duckbill talked to admissions — Mia's registered for the Oct 12 info session. Applications are open Nov 15 – Jan 15.",
   },
 ];
 
@@ -80,28 +66,24 @@ export function computeStoryPhaseTiming(
   exchange: Exchange,
   globalFrameOffset: number = STORY_GLOBAL_OFFSET
 ): StoryPhaseTiming {
-  // Phase 2: follow-up streams — snap start to nearest beat
-  const followUpStreamStart = snapLocalToBeat(40, globalFrameOffset);
+  // Phase 1: user message streams in — snap start to nearest beat
+  const followUpStreamStart = snapLocalToBeat(15, globalFrameOffset);
   const followUpStreamFrames = Math.ceil(
     (exchange.followUpText.length / USER_CHARS_PER_SECOND) * FPS
   );
   const followUpStreamEnd = followUpStreamStart + followUpStreamFrames;
 
-  // Phase 3: camera zoom (starts with follow-up text for dynamic overlap)
-  const zoomStart = followUpStreamStart;
-  const zoomEnd = 130;
+  // Phase 2: tool call chip — snap start to nearest beat (after typing finishes ~63)
+  const toolCallStart = snapLocalToBeat(70, globalFrameOffset);
+  const toolCallConnectedStart = toolCallStart + 25;
+  const toolCallEnd = toolCallStart + 40;
 
-  // Phase 4: tool call chip — snap start to nearest beat
-  const toolCallStart = snapLocalToBeat(80, globalFrameOffset);
-  const toolCallConnectedStart = toolCallStart + 30;
-  const toolCallEnd = toolCallStart + 45;
+  // Phase 3: phone call — snap to first beat after tool call "Connected" settles
+  const callChipStart = snapLocalToBeat(toolCallConnectedStart + 15, globalFrameOffset);
 
-  // Phase 5: phone call — snap start to nearest beat
-  const callChipStart = snapLocalToBeat(125, globalFrameOffset);
-
-  // Phase 6: human connected + duckbill result — snap to nearest beats
-  const humanConnectedStart = snapLocalToBeat(185, globalFrameOffset);
-  const duckbillStreamStart = snapLocalToBeat(200, globalFrameOffset);
+  // Phase 4: human connected + duckbill result — snap to nearest beats
+  const humanConnectedStart = snapLocalToBeat(callChipStart + 40, globalFrameOffset);
+  const duckbillStreamStart = snapLocalToBeat(humanConnectedStart + 15, globalFrameOffset);
   const duckbillStreamFrames = Math.ceil(
     (exchange.duckbillResponse.length / STREAM_CHARS_PER_SECOND) * FPS
   );
@@ -110,8 +92,6 @@ export function computeStoryPhaseTiming(
   return {
     followUpStreamStart,
     followUpStreamEnd,
-    zoomStart,
-    zoomEnd,
     toolCallStart,
     toolCallConnectedStart,
     toolCallEnd,

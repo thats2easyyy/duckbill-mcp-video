@@ -1,13 +1,12 @@
 /**
  * Shared timing constants for the Duckbill MCP promo video.
  *
- * IntroScene              = 210 frames (7.0s)  — kinetic typography opening (3 phrases, beat-aligned)
- * StoryScene              = 300 frames (10s)   — compressed chat → follow-up → zoom → tool call → phone → result
- * CapabilitiesScene       = 180 frames (6s)    — "Duckbill handles your [rotating chips]"
- * LLMCompatibilityScene   = 150 frames (5s)    — Duckbill logo + expanding LLM ring
+ * IntroScene              = 165 frames (5.5s)  — kinetic typography opening (4 phrases, beat-aligned)
+ * StoryScene              = 250 frames (8.3s)  — user message → tool call → phone → result
+ * NowYouCanScene          = 160 frames (5.33s) — "Now you can" + Duckbill logo + LLM compatibility ring
  * TaglineScene            = 150 frames (5s)    — brand reveal + "An MCP for the real world."
- * Fade overlaps           = 15 frames × 4 (intro→story, story→capabilities, capabilities→llm, llm→tagline)
- * Total                   = 210 + 300 + 180 + 150 + 150 − 60 = 930 frames (~31.0s)
+ * Fade overlaps           = 15 frames × 3 (intro→story, story→nowyoucan, nowyoucan→tagline)
+ * Total                   = 165 + 250 + 160 + 150 − 45 = 680 frames (~22.7s)
  */
 
 export const FPS = 30;
@@ -28,13 +27,11 @@ export const springPresets = {
   bouncy: { damping: 8 },
 } as const;
 
-export const INTRO_SCENE_DURATION = 210; // 7.0 seconds (3 phrases, beat-aligned + 30f exit)
+export const INTRO_SCENE_DURATION = 165; // 5.5 seconds (4 phrases, beat-aligned + snappy exit)
 
-export const STORY_SCENE_DURATION = 300; // 10 seconds
+export const STORY_SCENE_DURATION = 250; // 8.3 seconds (stream ends ~187f, read until 225f, exit 225–250f)
 
-export const LLM_COMPATIBILITY_DURATION = 150; // 5 seconds
-
-export const CAPABILITIES_SCENE_DURATION = 180; // 6 seconds
+export const NOW_YOU_CAN_DURATION = 160; // 5.33 seconds — "Now you can" + LLM compatibility merged
 
 export const TAGLINE_SCENE_DURATION = 150; // 5 seconds
 
@@ -48,25 +45,18 @@ export const FRAMES_PER_BEAT = FPS / (BPM / 60); // ~13.846
 export const INTRO_GLOBAL_OFFSET = 0;
 
 export const STORY_GLOBAL_OFFSET =
-  INTRO_SCENE_DURATION - FADE_TRANSITION_FRAMES; // 195
+  INTRO_SCENE_DURATION - FADE_TRANSITION_FRAMES; // 150
 
-export const CAPABILITIES_GLOBAL_OFFSET =
+export const NOW_YOU_CAN_GLOBAL_OFFSET =
   INTRO_SCENE_DURATION +
   STORY_SCENE_DURATION -
-  FADE_TRANSITION_FRAMES * 2; // 480
-
-export const LLM_GLOBAL_OFFSET =
-  INTRO_SCENE_DURATION +
-  STORY_SCENE_DURATION +
-  CAPABILITIES_SCENE_DURATION -
-  FADE_TRANSITION_FRAMES * 3; // 645
+  FADE_TRANSITION_FRAMES * 2; // 375
 
 export const TAGLINE_GLOBAL_OFFSET =
   INTRO_SCENE_DURATION +
   STORY_SCENE_DURATION +
-  CAPABILITIES_SCENE_DURATION +
-  LLM_COMPATIBILITY_DURATION -
-  FADE_TRANSITION_FRAMES * 4; // 780
+  NOW_YOU_CAN_DURATION -
+  FADE_TRANSITION_FRAMES * 3; // 530
 
 // ── Beat-snapping utilities ──
 
@@ -114,7 +104,6 @@ export const snapLocalToBeat = (
 export const TOTAL_DURATION =
   INTRO_SCENE_DURATION +
   STORY_SCENE_DURATION +
-  CAPABILITIES_SCENE_DURATION +
-  LLM_COMPATIBILITY_DURATION +
+  NOW_YOU_CAN_DURATION +
   TAGLINE_SCENE_DURATION -
-  FADE_TRANSITION_FRAMES * 4; // 930 frames (~31.0s)
+  FADE_TRANSITION_FRAMES * 3; // 680 frames (~22.7s)

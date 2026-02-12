@@ -3,28 +3,25 @@ import { Composition, Folder } from "remotion";
 import { DuckbillPromo } from "./DuckbillPromo";
 import { IntroScene } from "./scenes/IntroScene";
 import { StoryScene } from "./scenes/StoryScene";
-import { CapabilitiesScene } from "./scenes/CapabilitiesScene";
-import { LLMCompatibilityScene } from "./scenes/LLMCompatibilityScene";
+import { NowYouCanScene } from "./scenes/NowYouCanScene";
 import { TaglineScene } from "./scenes/TaglineScene";
 import {
   FPS,
   TOTAL_DURATION,
   INTRO_SCENE_DURATION,
   STORY_SCENE_DURATION,
-  CAPABILITIES_SCENE_DURATION,
-  LLM_COMPATIBILITY_DURATION,
+  NOW_YOU_CAN_DURATION,
   TAGLINE_SCENE_DURATION,
   INTRO_GLOBAL_OFFSET,
   STORY_GLOBAL_OFFSET,
-  CAPABILITIES_GLOBAL_OFFSET,
-  LLM_GLOBAL_OFFSET,
+  NOW_YOU_CAN_GLOBAL_OFFSET,
   TAGLINE_GLOBAL_OFFSET,
 } from "./lib/timing";
 
 /**
  * Root component — registers all compositions with Remotion.
  *
- * The main DuckbillMCPPromo composition is the full ~30-second video
+ * The main DuckbillMCPPromo composition is the full ~24.7-second video
  * at 1080×1080 (square for social media). Individual scenes are also
  * registered in a "Scenes" folder for isolated previewing in the Studio.
  */
@@ -62,22 +59,13 @@ export const Root: React.FC = () => {
           defaultProps={{ globalFrameOffset: STORY_GLOBAL_OFFSET }}
         />
         <Composition
-          id="CapabilitiesScene"
-          component={CapabilitiesScene}
-          durationInFrames={CAPABILITIES_SCENE_DURATION}
+          id="NowYouCanScene"
+          component={NowYouCanScene}
+          durationInFrames={NOW_YOU_CAN_DURATION}
           fps={FPS}
           width={1080}
           height={1080}
-          defaultProps={{ globalFrameOffset: CAPABILITIES_GLOBAL_OFFSET }}
-        />
-        <Composition
-          id="LLMCompatibilityScene"
-          component={LLMCompatibilityScene}
-          durationInFrames={LLM_COMPATIBILITY_DURATION}
-          fps={FPS}
-          width={1080}
-          height={1080}
-          defaultProps={{ globalFrameOffset: LLM_GLOBAL_OFFSET }}
+          defaultProps={{ globalFrameOffset: NOW_YOU_CAN_GLOBAL_OFFSET }}
         />
         <Composition
           id="TaglineScene"

@@ -4,45 +4,41 @@ import { TransitionSeries, springTiming } from "@remotion/transitions";
 import { fade } from "@remotion/transitions/fade";
 import { IntroScene } from "./scenes/IntroScene";
 import { StoryScene } from "./scenes/StoryScene";
-import { CapabilitiesScene } from "./scenes/CapabilitiesScene";
-import { LLMCompatibilityScene } from "./scenes/LLMCompatibilityScene";
+import { NowYouCanScene } from "./scenes/NowYouCanScene";
 import { TaglineScene } from "./scenes/TaglineScene";
 import { lightMode } from "./lib/colors";
 import {
   INTRO_SCENE_DURATION,
   STORY_SCENE_DURATION,
-  CAPABILITIES_SCENE_DURATION,
-  LLM_COMPATIBILITY_DURATION,
+  NOW_YOU_CAN_DURATION,
   TAGLINE_SCENE_DURATION,
   FADE_TRANSITION_FRAMES,
   INTRO_GLOBAL_OFFSET,
   STORY_GLOBAL_OFFSET,
-  CAPABILITIES_GLOBAL_OFFSET,
-  LLM_GLOBAL_OFFSET,
+  NOW_YOU_CAN_GLOBAL_OFFSET,
   TAGLINE_GLOBAL_OFFSET,
   FPS,
   TOTAL_DURATION,
 } from "./lib/timing";
 
 /**
- * Main composition — orchestrates the full ~29-second promo.
+ * Main composition — orchestrates the full ~23.3-second promo.
  *
  * Architecture:
  *   TransitionSeries:
- *     IntroScene              =  156 frames (5.2s) — kinetic typography opening
+ *     IntroScene              =  165 frames (5.5s)  — kinetic typography opening
  *     fade()                  =   15 frames (0.5s overlap)
- *     StoryScene              =  300 frames (10s)  — compressed chat → follow-up → zoom → call → result
+ *     StoryScene              =  250 frames (8.3s)  — user message → tool call → phone call → result
  *     fade()                  =   15 frames (0.5s overlap)
- *     CapabilitiesScene       =  180 frames (6s)   — "Duckbill handles your [rotating chips]"
+ *     NowYouCanScene          =  160 frames (5.33s) — "Now you can" + Duckbill logo + LLM compatibility ring
  *     fade()                  =   15 frames (0.5s overlap)
- *     LLMCompatibilityScene   =  150 frames (5s)   — Duckbill logo + expanding LLM ring
- *     fade()                  =   15 frames (0.5s overlap)
- *     TaglineScene            =  150 frames (5s)   — brand reveal + "An MCP for the real world."
- *     Total                   = 156 + 300 + 180 + 150 + 150 - 60 = 876 frames (~29.2s)
+ *     TaglineScene            =  150 frames (5s)    — brand reveal + "An MCP for the real world."
+ *     Total                   = 165 + 250 + 160 + 150 - 45 = 680 frames (~22.7s)
  *
  * Background audio plays as a sibling to TransitionSeries (not inside it)
  * so it spans the full composition duration independently.
  */
+
 export const DuckbillPromo: React.FC = () => {
   const frame = useCurrentFrame();
 
@@ -86,17 +82,8 @@ export const DuckbillPromo: React.FC = () => {
           timing={springTiming({ durationInFrames: FADE_TRANSITION_FRAMES, config: { damping: 200 } })}
         />
 
-        <TransitionSeries.Sequence durationInFrames={CAPABILITIES_SCENE_DURATION}>
-          <CapabilitiesScene globalFrameOffset={CAPABILITIES_GLOBAL_OFFSET} />
-        </TransitionSeries.Sequence>
-
-        <TransitionSeries.Transition
-          presentation={fade()}
-          timing={springTiming({ durationInFrames: FADE_TRANSITION_FRAMES, config: { damping: 200 } })}
-        />
-
-        <TransitionSeries.Sequence durationInFrames={LLM_COMPATIBILITY_DURATION}>
-          <LLMCompatibilityScene globalFrameOffset={LLM_GLOBAL_OFFSET} />
+        <TransitionSeries.Sequence durationInFrames={NOW_YOU_CAN_DURATION}>
+          <NowYouCanScene globalFrameOffset={NOW_YOU_CAN_GLOBAL_OFFSET} />
         </TransitionSeries.Sequence>
 
         <TransitionSeries.Transition
@@ -109,9 +96,9 @@ export const DuckbillPromo: React.FC = () => {
         </TransitionSeries.Sequence>
       </TransitionSeries>
 
-      {/* Background audio — sibling to TransitionSeries so it spans full duration */}
+      {/* Background audio */}
       <Audio
-        src={staticFile("audio/Skyline Stutter.mp3")}
+        src={staticFile("audio/kontraa-no-sleep-hiphop-music-473847.mp3")}
         volume={audioVolume}
       />
     </>

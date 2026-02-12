@@ -42,7 +42,6 @@ export const TaglineScene: React.FC<TaglineSceneProps> = ({
   // ── Beat-snapped entrance delays ──
   const wordmarkDelay = snapLocalToBeat(24, globalFrameOffset);
   const taglineDelay = snapLocalToBeat(48, globalFrameOffset);
-  const urlDelay = snapLocalToBeat(72, globalFrameOffset);
 
   // ── Audio reactivity ──
   const audioData = useAudioData(AUDIO_SRC);
@@ -60,12 +59,12 @@ export const TaglineScene: React.FC<TaglineSceneProps> = ({
   }
 
   // ── Logo position & size animation ──
-  // Uses the SAME DuckbillLogo component as LLMCompatibilityScene so the
+  // Uses the SAME DuckbillLogo component as NowYouCanScene so the
   // fade crossfade is invisible (identical asset at identical position).
   // Then the logo smoothly moves up and scales to its final size.
-  const LOGO_START_Y = 580; // LLMCompatibilityScene CENTER_Y
-  const LOGO_END_Y = 401; // centered position in TaglineScene layout
-  const LOGO_START_SIZE = 80; // matches LLMCompatibilityScene logo size
+  const LOGO_START_Y = 630; // NowYouCanScene CENTER_Y
+  const LOGO_END_Y = 420; // lowered to equalize spacing with wordmark & tagline
+  const LOGO_START_SIZE = 80; // matches NowYouCanScene logo size
   const LOGO_END_SIZE = 120; // final brand-mark size
 
   const logoPositionProgress = spring({
@@ -113,17 +112,6 @@ export const TaglineScene: React.FC<TaglineSceneProps> = ({
     extrapolateLeft: "clamp",
   });
 
-  // URL fade-in
-  const urlEntrance = spring({
-    frame: frame - urlDelay,
-    fps,
-    config: springPresets.smooth,
-  });
-
-  const urlTranslateY = interpolate(urlEntrance, [0, 1], [15, 0], {
-    extrapolateRight: "clamp",
-    extrapolateLeft: "clamp",
-  });
 
   return (
     <div
@@ -136,15 +124,15 @@ export const TaglineScene: React.FC<TaglineSceneProps> = ({
         alignItems: "center",
         justifyContent: "center",
         fontFamily: `${fontFamily}, -apple-system, BlinkMacSystemFont, sans-serif`,
-        gap: 32,
+        gap: 24,
         position: "relative",
         overflow: "hidden",
       }}
     >
       {/* Spacer — reserves layout space for the absolutely-positioned logo */}
-      <div style={{ width: 120, height: 120, flexShrink: 0 }} />
+      <div style={{ width: 120, height: 160, flexShrink: 0 }} />
 
-      {/* DuckbillLogo — same component as LLMCompatibilityScene.
+      {/* DuckbillLogo — same component as NowYouCanScene.
           Starts at (540, 580) matching the LLM scene exactly so the
           fade crossfade is invisible, then animates to final position. */}
       <div
@@ -179,7 +167,7 @@ export const TaglineScene: React.FC<TaglineSceneProps> = ({
         style={{
           opacity: taglineEntrance,
           transform: `translateY(${taglineTranslateY}px)`,
-          marginTop: 8,
+          marginTop: 32,
           zIndex: 1,
         }}
       >
@@ -191,31 +179,10 @@ export const TaglineScene: React.FC<TaglineSceneProps> = ({
             opacity: 0.85,
           }}
         >
-          You don't have to do it all yourself.
+          Learn more at whattheduck.ai
         </span>
       </div>
 
-      {/* URL */}
-      <div
-        style={{
-          opacity: urlEntrance,
-          transform: `translateY(${urlTranslateY}px)`,
-          marginTop: 16,
-          zIndex: 1,
-        }}
-      >
-        <span
-          style={{
-            fontSize: 30,
-            fontWeight: 500,
-            color: lightMode.bodyText,
-            opacity: 0.65,
-            letterSpacing: 1,
-          }}
-        >
-          whattheduck.ai
-        </span>
-      </div>
     </div>
   );
 };

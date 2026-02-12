@@ -18,7 +18,7 @@ export const ChatInterface: React.FC<{
   return (
     <div
       style={{
-        width: 750,
+        width: 880,
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",

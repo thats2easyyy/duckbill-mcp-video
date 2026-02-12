@@ -64,7 +64,6 @@ export const MessageBubble: React.FC<{
       style={{
         display: "flex",
         justifyContent: isUser ? "flex-end" : "flex-start",
-        marginBottom: 12,
         opacity,
         transform: `translateY(${translateY}px)`,
       }}
@@ -72,13 +71,13 @@ export const MessageBubble: React.FC<{
       <div
         style={{
           maxWidth: "85%",
-          padding: "14px 20px",
-          borderRadius: isUser ? "24px 24px 4px 24px" : "24px 24px 24px 4px",
+          padding: "16px 24px",
+          borderRadius: isUser ? "28px 28px 4px 28px" : "28px 28px 28px 4px",
           backgroundColor,
           color: lightMode.bodyText,
-          fontSize: 22,
+          fontSize: 26,
           lineHeight: 1.5,
-          fontWeight: 400,
+          fontWeight: isUser ? 500 : 400,
           border,
           whiteSpace: "pre-line",
         }}
